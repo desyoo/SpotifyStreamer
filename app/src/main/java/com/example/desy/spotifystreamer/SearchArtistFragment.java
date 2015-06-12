@@ -1,32 +1,32 @@
 package com.example.desy.spotifystreamer;
 
-import android.app.Activity;
-import android.app.Fragment;
-import android.net.Uri;
 import android.os.Bundle;
+import android.support.v4.app.Fragment;
+import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ArrayAdapter;
+import android.widget.EditText;
 import android.widget.ListView;
 
 import java.util.ArrayList;
-import java.util.Arrays;
+
+import kaaes.spotify.webapi.android.SpotifyApi;
+import kaaes.spotify.webapi.android.SpotifyService;
+import kaaes.spotify.webapi.android.models.Artist;
+import kaaes.spotify.webapi.android.models.ArtistsPager;
+import retrofit.Callback;
+import retrofit.RetrofitError;
+import retrofit.client.Response;
 
 
-/**
- * A simple {@link Fragment} subclass.
- * Activities that contain this fragment must implement the
- * {@link SearchArtistFragment.OnFragmentInteractionListener} interface
- * to handle interaction events.
- * Use the {@link SearchArtistFragment#newInstance} factory method to
- * create an instance of this fragment.
- */
 public class SearchArtistFragment extends Fragment {
     private static final String LOG_TAG = SearchArtistFragment.class.getSimpleName();
-    private SearchArtistFragment mSearchArtistFragment;
+    private EditText etSearch;
+    private SearchArtistAdapter mSearchArtistAdapter;
+    private ArrayList<Artist> list;
 
-    private ArrayAdapter<String> mArtistAdapter;
+
     private ListView mListView;
 
     public SearchArtistFragment() {
@@ -39,19 +39,66 @@ public class SearchArtistFragment extends Fragment {
 
     }
 
+
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        //mSearchArtist = new SearchArtist(getActivity(),null,0);
         View rootView = inflater.inflate(R.layout.fragment_main, container, false);
-
-        //mListView = (ListView) rootView.findViewById(R.id.listview_artist);
-        String[] fakedata = {"sunshine","hello","world","hello_me","hello_you"};
-        ArrayList<String> testString = new ArrayList<>(Arrays.asList(fakedata));
-        mArtistAdapter = new ArrayAdapter<String>(getActivity(),R.layout.list_item_artist,R.id.list_item_artist_textview, testString);
+        etSearch = ((EditText) rootView.findViewById(R.id.etSearch));
+        etSearch.setOnKeyListener(new View.OnKeyListener() {
+            @Override
+            public boolean onKey(View view, int i, KeyEvent keyEvent) {
+                // If the event is a key-down event on the "enter" button
+                if ((keyEvent.getAction() == KeyEvent.ACTION_DOWN) &&
+                        (keyEvent.getKeyCode() == KeyEvent.KEYCODE_ENTER)) {
+                    // Perform action on key press
+                    //Toast.makeText(HelloFormStuff.this, edittext.getText(), Toast.LENGTH_SHORT).show();
+                    searchSpotifyArtists(etSearch.getText().toString());
+                    return true;
+                }
+                return false;
+            }
+        });
+        mListView = (ListView) rootView.findViewById(R.id.listview_artist);
         return rootView;
 
     }
+
+
+    private void searchSpotifyArtists(final String query){
+        SpotifyApi api = new SpotifyApi();
+        final SpotifyService spotify = api.getService();
+        // Custom method
+        setLoading(true);
+        spotify.searchArtists(query, new Callback<ArtistsPager>() {
+            @Override
+            public void success(ArtistsPager artistsPager, Response response) {
+                list = new ArrayList<>();
+                for (Artist artist : artistsPager.artists.items) {
+                    list.add(artist);
+                }
+
+                getActivity().runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        mSearchArtistAdapter = new SearchArtistAdapter(getActivity(), 0, list);
+                        mListView.setAdapter(mSearchArtistAdapter);
+                    }
+                });
+            }
+
+            @Override
+            public void failure(RetrofitError error) {
+                //Display an error message
+            }
+        });
+
+    }
+
+    public void setLoading(boolean n) {
+        return;
+    }
+
 
 
 }

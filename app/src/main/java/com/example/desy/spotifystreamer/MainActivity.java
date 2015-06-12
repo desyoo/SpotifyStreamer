@@ -1,18 +1,20 @@
 package com.example.desy.spotifystreamer;
 
-import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
+import android.support.v7.app.ActionBarActivity;
 import android.view.Menu;
 import android.view.MenuItem;
 
 
 public class MainActivity extends ActionBarActivity {
+    private SearchArtistAdapter mSearchArtistAdapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         //SearchArtist searchArtist = ((SearchArtist) getSupportFragmentManager().findFragmentById(R.id.fragment_artist));
+        SearchArtistFragment searchArtistFragment = ((SearchArtistFragment)getSupportFragmentManager().findFragmentById(R.id.fragment_artist));
     }
 
     @Override
@@ -36,4 +38,5 @@ public class MainActivity extends ActionBarActivity {
 
         return super.onOptionsItemSelected(item);
     }
+
 }
