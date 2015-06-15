@@ -18,6 +18,7 @@
                 android:layout_weight="1"
                 android:id="@+id/etSearch"
                 android:imeOptions="actionSend"
+                android:singleLine="true"
                 android:layout_gravity="left|top" />
         </LinearLayout>
 
