@@ -50,9 +50,7 @@ public class TopTracksFragment extends Fragment {
             } else {
                 artistID= extras.getString("artist_id");
             }
-        }
-
-        if (savedInstanceState != null) {
+        } else {
             listTack = savedInstanceState.getParcelableArrayList(STATE_TRACK);
         }
 
