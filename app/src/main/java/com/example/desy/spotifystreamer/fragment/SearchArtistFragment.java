@@ -1,4 +1,4 @@
-package com.example.desy.spotifystreamer;
+package com.example.desy.spotifystreamer.fragment;
 
 import android.content.Intent;
 import android.os.Bundle;
@@ -12,6 +12,11 @@ import android.widget.AdapterView;
 import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.Toast;
+
+import com.example.desy.spotifystreamer.R;
+import com.example.desy.spotifystreamer.TopTracksActivity;
+import com.example.desy.spotifystreamer.adapter.SearchArtistAdapter;
+import com.example.desy.spotifystreamer.model.SimpleArtist;
 
 import java.util.ArrayList;
 
@@ -78,7 +83,7 @@ public class SearchArtistFragment extends Fragment {
                 SimpleArtist artist = list.get(i);
                 String id = artist.id;
                 Log.d("artist_id",id);
-                Intent intent = new Intent(getActivity(),TopTracks.class);
+                Intent intent = new Intent(getActivity(),TopTracksActivity.class);
                 //based on item add info to intent
                 intent.putExtra("artist_id",id);
                 startActivity(intent);
@@ -131,13 +136,15 @@ public class SearchArtistFragment extends Fragment {
             @Override
             public void failure(RetrofitError error) {
                 //Display an error message
-                final RetrofitError getError = error;
-                getActivity().runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        Toast.makeText(getActivity(), getError.toString(), Toast.LENGTH_SHORT).show();
-                    }
-                });
+                if (error != null) {
+                    final RetrofitError getError = error;
+                    getActivity().runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            Toast.makeText(getActivity(), getError.toString(), Toast.LENGTH_SHORT).show();
+                        }
+                    });
+                }
             }
         });
 

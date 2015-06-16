@@ -1,4 +1,4 @@
-package com.example.desy.spotifystreamer;
+package com.example.desy.spotifystreamer.adapter;
 
 import android.content.Context;
 import android.view.LayoutInflater;
@@ -8,6 +8,8 @@ import android.widget.ArrayAdapter;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import com.example.desy.spotifystreamer.R;
+import com.example.desy.spotifystreamer.model.SimpleTrack;
 import com.squareup.picasso.Picasso;
 
 import java.util.List;
@@ -42,13 +44,13 @@ public class TopTracksAdapter extends ArrayAdapter<SimpleTrack>{
         } else {
             viewHolder = (ViewHolder) convertView.getTag();
         }
-        viewHolder.tvAblum.setText(track.album);
-        viewHolder.tvTrack.setText(track.name);
+        viewHolder.tvAblum.setText(track.getAlbum());
+        viewHolder.tvTrack.setText(track.getName());
 
         if (viewHolder.ivThumbnail != null ) {
             viewHolder.ivThumbnail.setImageResource(android.R.color.transparent);
             viewHolder.ivThumbnail.setImageBitmap(null);
-            Picasso.with(getContext()).load(track.thumbnail).resize(200, 200).into(viewHolder.ivThumbnail);
+            Picasso.with(getContext()).load(track.getThumbnail()).resize(200, 200).into(viewHolder.ivThumbnail);
         }
 
 

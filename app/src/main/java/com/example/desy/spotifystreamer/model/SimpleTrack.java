@@ -1,4 +1,4 @@
-package com.example.desy.spotifystreamer;
+package com.example.desy.spotifystreamer.model;
 
 import android.os.Parcel;
 import android.os.Parcelable;
@@ -58,7 +58,7 @@ public class SimpleTrack implements Parcelable {
         dest.writeString(this.name);
     }
 
-    protected SimpleTrack(Parcel in) {
+    public SimpleTrack(Parcel in) {
         this.thumbnail = in.readString();
         this.album = in.readString();
         this.name = in.readString();

@@ -1,13 +1,16 @@
-package com.example.desy.spotifystreamer;
+package com.example.desy.spotifystreamer.fragment;
 
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ListView;
 import android.widget.Toast;
+
+import com.example.desy.spotifystreamer.R;
+import com.example.desy.spotifystreamer.adapter.TopTracksAdapter;
+import com.example.desy.spotifystreamer.model.SimpleTrack;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -43,17 +46,20 @@ public class TopTracksFragment extends Fragment {
         if (savedInstanceState == null) {
             Bundle extras = getActivity().getIntent().getExtras();
             if(extras == null) {
-                Toast.makeText(getActivity(), "No Tracks", Toast.LENGTH_SHORT).show();
-                artistID= null;
+                Toast.makeText(getActivity(), "No Tracks found", Toast.LENGTH_SHORT).show();
             } else {
                 artistID= extras.getString("artist_id");
             }
         }
-        Log.d(LOG_TAG, artistID);
+
+        if (savedInstanceState != null) {
+            listTack = savedInstanceState.getParcelableArrayList(STATE_TRACK);
+        }
+
         openTopTrack(artistID);
 
-            return rootView;
-        }
+        return rootView;
+    }
 
     @Override
     public void onSaveInstanceState(Bundle outState)
@@ -84,13 +90,15 @@ public class TopTracksFragment extends Fragment {
 
             @Override
             public void failure(RetrofitError error) {
-                final RetrofitError getError = error;
-                getActivity().runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        Toast.makeText(getActivity(), getError.toString(), Toast.LENGTH_SHORT).show();
-                    }
-                });
+                if (error != null) {
+                    final RetrofitError getError = error;
+                    getActivity().runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            Toast.makeText(getActivity(), getError.toString(), Toast.LENGTH_SHORT).show();
+                        }
+                    });
+                }
             }
         });
     }

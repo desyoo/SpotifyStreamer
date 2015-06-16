@@ -1,4 +1,4 @@
-package com.example.desy.spotifystreamer;
+package com.example.desy.spotifystreamer.adapter;
 
 import android.content.Context;
 import android.view.LayoutInflater;
@@ -8,6 +8,8 @@ import android.widget.ArrayAdapter;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import com.example.desy.spotifystreamer.R;
+import com.example.desy.spotifystreamer.model.SimpleArtist;
 import com.squareup.picasso.Picasso;
 
 import java.util.ArrayList;

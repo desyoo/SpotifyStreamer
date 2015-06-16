@@ -1,4 +1,4 @@
-package com.example.desy.spotifystreamer;
+package com.example.desy.spotifystreamer.model;
 
 import android.os.Parcel;
 import android.os.Parcelable;
