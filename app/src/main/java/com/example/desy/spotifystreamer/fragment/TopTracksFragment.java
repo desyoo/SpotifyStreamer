@@ -1,13 +1,16 @@
 package com.example.desy.spotifystreamer.fragment;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
 import android.widget.ListView;
 import android.widget.Toast;
 
+import com.example.desy.spotifystreamer.MediaPlayActivity;
 import com.example.desy.spotifystreamer.R;
 import com.example.desy.spotifystreamer.adapter.TopTracksAdapter;
 import com.example.desy.spotifystreamer.model.SimpleTrack;
@@ -39,7 +42,7 @@ public class TopTracksFragment extends Fragment {
     }
 
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+    public View onCreateView(final LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         View rootView = inflater.inflate(R.layout.fragment_top_tracks, container, false);
         mListView = (ListView) rootView.findViewById(R.id.lvTopTracks);
@@ -52,9 +55,29 @@ public class TopTracksFragment extends Fragment {
             }
         } else {
             listTack = savedInstanceState.getParcelableArrayList(STATE_TRACK);
+            // Create an adapter
+            mTopTrackAdapte = new TopTracksAdapter(getActivity(), 0, listTack);
+            // Use the adapter so the listTrack can be displayed on screen :)
+            mListView.setAdapter(mTopTrackAdapte);
         }
 
         openTopTrack(artistID);
+
+        mListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
+                SimpleTrack simpleTrack = listTack.get(i);
+                Intent intent = new Intent(getActivity(), MediaPlayActivity.class);
+                intent.putExtra("url",simpleTrack.getMusicUrl());
+                intent.putExtra("thumbnail", simpleTrack.getThumbnail());
+                intent.putExtra("album", simpleTrack.getAlbum());
+                intent.putExtra("artistName",simpleTrack.getName());
+                intent.putExtra("trackName",simpleTrack.getTrackName());
+                intent.putExtra("trackDuration",simpleTrack.getTrackDuration());
+                startActivity(intent);
+
+            }
+        });
 
         return rootView;
     }

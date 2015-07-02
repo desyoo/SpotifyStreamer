@@ -7,7 +7,6 @@ import android.view.Menu;
 import android.view.MenuItem;
 
 import com.example.desy.spotifystreamer.adapter.SearchArtistAdapter;
-import com.example.desy.spotifystreamer.fragment.SearchArtistFragment;
 
 
 public class MainActivity extends ActionBarActivity {
@@ -18,7 +17,7 @@ public class MainActivity extends ActionBarActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         //SearchArtist searchArtist = ((SearchArtist) getSupportFragmentManager().findFragmentById(R.id.fragment_artist));
-        SearchArtistFragment searchArtistFragment = ((SearchArtistFragment)getSupportFragmentManager().findFragmentById(R.id.fragment_artist));
+        //SearchArtistFragment searchArtistFragment = ((SearchArtistFragment)getSupportFragmentManager().findFragmentById(R.id.fragment_artist));
     }
 
     @Override

@@ -92,6 +92,8 @@ public class SearchArtistFragment extends Fragment {
 
         if (savedInstanceState != null) {
             list = savedInstanceState.getParcelableArrayList(STATE_ARTIST);
+            mSearchArtistAdapter = new SearchArtistAdapter(getActivity(), 0, list);
+            mListView.setAdapter(mSearchArtistAdapter);
         }
 
         return rootView;

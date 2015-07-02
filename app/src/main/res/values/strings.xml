@@ -12,4 +12,5 @@
     <string name="fail_no_artists">Couldnt find the result</string>
     <string name="fail_loading">Load failed</string>
     <string name="title_activity_top_tracks">TopTracks</string>
+    <string name="title_activity_media_play">MediaPlayActivity</string>
 </resources>
