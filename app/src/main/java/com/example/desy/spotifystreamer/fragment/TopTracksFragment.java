@@ -74,6 +74,8 @@ public class TopTracksFragment extends Fragment {
                 intent.putExtra("artistName",simpleTrack.getName());
                 intent.putExtra("trackName",simpleTrack.getTrackName());
                 intent.putExtra("trackDuration",simpleTrack.getTrackDuration());
+                intent.putExtra("position", i);
+                intent.putParcelableArrayListExtra("listTopTrack",listTack);
                 startActivity(intent);
 
             }

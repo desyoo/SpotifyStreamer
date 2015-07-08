@@ -84,15 +84,26 @@
             style="?android:attr/borderlessButtonStyle"
             android:layout_weight="1"
             android:id="@+id/btBack" />
-
-        <Button
+        <FrameLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:background="@android:drawable/ic_media_play"
-            style="?android:attr/borderlessButtonStyle"
-            android:layout_weight="1"
-            android:id="@+id/btPlay" />
+            android:layout_weight="1">
+            <Button
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:background="@android:drawable/ic_media_play"
+                style="?android:attr/borderlessButtonStyle"
+                android:id="@+id/btPlay" />
+            <Button
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:background="@android:drawable/ic_media_pause"
+                style="?android:attr/borderlessButtonStyle"
+                android:enabled="false"
+                android:visibility="gone"
+                android:id="@+id/btPause" />
 
+        </FrameLayout>
         <Button
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"

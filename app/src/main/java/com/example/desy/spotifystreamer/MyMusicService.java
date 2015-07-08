@@ -10,22 +10,24 @@ import android.content.Intent;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.net.wifi.WifiManager;
-import android.os.Handler;
+import android.os.Bundle;
 import android.os.IBinder;
-import android.os.Looper;
-import android.os.Message;
 import android.os.PowerManager;
 import android.util.Log;
 import android.widget.Toast;
 
+import com.example.desy.spotifystreamer.model.SimpleTrack;
+
 import java.io.IOException;
+import java.util.ArrayList;
 
 /**
  * Created by desy on 6/18/15.
  */
 public class MyMusicService extends Service implements MediaPlayer.OnPreparedListener, MediaPlayer.OnErrorListener,
         MediaPlayer.OnCompletionListener {
-
+    // The tag we put on debug messages
+    final static String TAG = "MyMusicService";
     // These are the Intent actions that we are prepared to handle. Notice that the fact these
     // constants exist in our class is a mere convenience: what really defines the actions our
     // service can handle are the <action> tags in the <intent-filters> tag for our service in
@@ -33,11 +35,11 @@ public class MyMusicService extends Service implements MediaPlayer.OnPreparedLis
     public static final String ACTION_TOGGLE_PLAYBACK =
             "com.example.desy.action.TOGGLE_PLAYBACK";
     public static final String ACTION_PLAY = "com.example.desy.spotifystreamer.PLAY";
-    public static final String ACTION_PAUSE = "com.example.desy.action.PAUSE";
-    public static final String ACTION_STOP = "com.example.desy.action.STOP";
-    public static final String ACTION_SKIP = "com.example.desy.action.SKIP";
-    public static final String ACTION_REWIND = "com.example.desy.action.REWIND";
-    public static final String ACTION_URL = "com.example.desy.action.URL";
+    public static final String ACTION_PAUSE = "com.example.desy.spotifystreamer.PAUSE";
+    public static final String ACTION_STOP = "com.example.desy.spotifystreamer.STOP";
+    public static final String ACTION_SKIP = "com.example.desy.spotifystreamer.SKIP";
+    public static final String ACTION_REWIND = "com.example.desy.spotifystreamer.REWIND";
+    public static final String ACTION_SEEK = "com.example.desy.spotifystreamer.SEEK";
 
     // title of the song we are currently playing
     String mSongTitle = "";
@@ -63,12 +65,20 @@ public class MyMusicService extends Service implements MediaPlayer.OnPreparedLis
     ComponentName mMediaButtonReceiverComponent;
 
     Notification mNotification = null;
+    // if in Retrieving mode, this flag indicates whether we should start playing immediately
+    // when we are ready or not.
+    boolean mStartPlayingAfterRetrieve = false;
+
+
+    //song list
+    private ArrayList<SimpleTrack> songs;
+    //current position
+    private int songPosn;
 
 
     // indicates the state our service:
     enum State {
         Retrieving, // the MediaRetriever is retrieving music
-        Stopped,    // media player is stopped and not prepared to play
         Preparing,  // media player is preparing...
         Playing,    // playback active (media player ready!). (but the media player may actually be
         // paused in this state if we don't have audio focus. But we stay in this state
@@ -77,35 +87,6 @@ public class MyMusicService extends Service implements MediaPlayer.OnPreparedLis
     };
     State mState = State.Retrieving;
 
-    private String getUrl;
-    private String url;
-    private int songPosn;
-    private Looper mServiceLooper;
-    private ServiceHandler mServiceHandler;
-
-    // Handler that receives messages from the thread
-    private final class ServiceHandler extends Handler {
-        public ServiceHandler(Looper looper) {
-            super(looper);
-        }
-        @Override
-        public void handleMessage(Message msg) {
-            // Normally we would do some work here, like download a file.
-            // For our sample, we just sleep for 5 seconds.
-            long endTime = System.currentTimeMillis() + 5*1000;
-            while (System.currentTimeMillis() < endTime) {
-                synchronized (this) {
-                    try {
-                        wait(endTime - System.currentTimeMillis());
-                    } catch (Exception e) {
-                    }
-                }
-            }
-            // Stop the service using the startId, so that we don't stop
-            // the service in the middle of handling another job
-            stopSelf(msg.arg1);
-        }
-    }
 
     public MyMusicService () {
     }
@@ -113,7 +94,6 @@ public class MyMusicService extends Service implements MediaPlayer.OnPreparedLis
     @Override
     public void onCreate() {
         super.onCreate();
-
         // Create the Wifi lock (this does not acquire the lock, this just creates it)
         mWifiLock = ((WifiManager) getSystemService(Context.WIFI_SERVICE))
                 .createWifiLock(WifiManager.WIFI_MODE_FULL, "mylock");
@@ -121,50 +101,41 @@ public class MyMusicService extends Service implements MediaPlayer.OnPreparedLis
         mNotificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
         mAudioManager = (AudioManager) getSystemService(AUDIO_SERVICE);
 
-        mMediaButtonReceiverComponent = new ComponentName(this, MusicIntentReceiver.class);
-
-//        initMusicPlayer();
-
+        //mMediaButtonReceiverComponent = new ComponentName(this, MusicIntentReceiver.class);
     }
 
-//    public void initMusicPlayer(){
-//        //set player properties
-//        mMediaPlayer.setWakeMode(getApplicationContext(), PowerManager.PARTIAL_WAKE_LOCK);
-//        mMediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
-//        try {
-//            mMediaPlayer.setDataSource(url);
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//        }
-//    }
 
     public int onStartCommand(Intent intent, int flags, int startId) {
-        Toast.makeText(this, "service starting", Toast.LENGTH_SHORT).show();
-
-        // For each start request, send a message to start a job and deliver the
-        // start ID so we know which request we're stopping when we finish the job
-//        Message msg = mServiceHandler.obtainMessage();
-//        msg.arg1 = startId;
-//        mServiceHandler.sendMessage(msg);
-
+        //Toast.makeText(this, "service starting", Toast.LENGTH_SHORT).show();
         if (intent.getAction().equals(ACTION_PLAY)) {
-            processTogglePlaybackRequest(intent);
-        }
-
-        return 0;
-    }
-
-    void processTogglePlaybackRequest(Intent intent) {
-        if (mState == State.Paused) {
-            playNextSong(intent.getData().toString());
-        } else {
+            Bundle extras = intent.getExtras();
+            String url = extras.getString("url");
+            playNextSong(url);
+        } else if (intent.getAction().equals(ACTION_PAUSE)) {
+            Toast.makeText(this, "service pause", Toast.LENGTH_SHORT).show();
             processPauseRequest();
         }
+//        else if (intent.getAction().equals(ACTION_SKIP)) {
+//
+        else if (intent.getAction().equals(ACTION_REWIND)) {
+            processRewindRequest();
+        } else if (intent.getAction().equals(ACTION_REWIND)) {
+            Bundle extras = intent.getExtras();
+            int pos = extras.getInt("pos");
+            updateSeekPos(pos);
+        }
 
+        return START_NOT_STICKY; // Means we started the service, but don't want it to
+        // restart in case it's killed.
     }
 
 
     void playNextSong (String url) {
+        if (mState == State.Paused) {
+            mState = State.Playing;
+            if (!mMediaPlayer.isPlaying()) mMediaPlayer.start();
+            return;
+        }
         relaxResources(false); // release everything except MediaPlayer
         try {
             createMediaPlayerIfNeeded();
@@ -172,13 +143,12 @@ public class MyMusicService extends Service implements MediaPlayer.OnPreparedLis
             mMediaPlayer.setDataSource(url);
             mIsStreaming = url.startsWith("http:") || url.startsWith("https:");
 
-            mState = State.Preparing;
-            setUpAsForeground("mSongTitle" + " (loading)");
+            //mState = State.Preparing;
+            //setUpAsForeground("mSongTitle" + " (loading)");
 
             // starts preparing the media player in the background. When it's done, it will call
             // our OnPreparedListener (that is, the onPrepared() method on this class, since we set
             // the listener to 'this').
-            //
             // Until the media player is prepared, we *cannot* call start() on it!
             mMediaPlayer.prepareAsync();
 
@@ -198,9 +168,24 @@ public class MyMusicService extends Service implements MediaPlayer.OnPreparedLis
     }
 
     void processPauseRequest() {
-
+        mState = State.Paused;
+        mMediaPlayer.pause();
+        //relaxResources(false); // while paused, we always retain the MediaPlayer
     }
 
+    void processRewindRequest() {
+
+        //if (mState == State.Playing || mState == State.Paused) {
+            Toast.makeText(this, "service rewind", Toast.LENGTH_SHORT).show();
+            mMediaPlayer.seekTo(0);
+        //}
+    }
+
+    void processSkipRequest() {
+        if (mState == State.Playing || mState == State.Paused) {
+            playNextSong(null);
+        }
+    }
 
     /**
      * Makes sure the media player exists and has been reset. This will create the media player
@@ -266,8 +251,37 @@ public class MyMusicService extends Service implements MediaPlayer.OnPreparedLis
         startForeground(NOTIFICATION_ID, mNotification);
     }
 
+    /** Updates the notification. */
+    void updateNotification(String text) {
+        PendingIntent pi = PendingIntent.getActivity(getApplicationContext(), 0,
+                new Intent(getApplicationContext(), MediaPlayActivity.class),
+                PendingIntent.FLAG_UPDATE_CURRENT);
+        mNotification.setLatestEventInfo(getApplicationContext(), "RandomMusicPlayer", text, pi);
+        mNotificationManager.notify(NOTIFICATION_ID, mNotification);
+    }
+
+
+
+    public void updateSeekPos(int seekPos) {
+        if (mMediaPlayer.isPlaying()) {
+            int playPositionInMillisecconds = (mMediaPlayer.getDuration() / 100)
+                    * seekPos;
+            mMediaPlayer.seekTo(playPositionInMillisecconds);
+        }
+    }
+
+
+    public void setList(ArrayList<SimpleTrack> theSongs){
+        songs=theSongs;
+    }
+
+
+
     /** Called when MediaPlayer is ready */
     public void onPrepared(MediaPlayer player) {
+        // The media player is done preparing. That means we can start playing!
+        //mState = State.Playing;
+        //updateNotification(mSongTitle + " (playing)");
         player.start();
     }
 
@@ -280,10 +294,22 @@ public class MyMusicService extends Service implements MediaPlayer.OnPreparedLis
     public void onCompletion(MediaPlayer mediaPlayer) {
         // The media player finished playing the current song, so we go ahead and start the next.
         //playNextSong(null);
+        relaxResources(true);
     }
 
     @Override
     public boolean onError(MediaPlayer mediaPlayer, int i, int i1) {
-        return false;
+        Toast.makeText(getApplicationContext(), "Media player error! Resetting.",
+                Toast.LENGTH_SHORT).show();
+        Log.e(TAG, "Error: what=" + String.valueOf(i) + ", extra=" + String.valueOf(i1));
+        //mState = State.Retrieving;
+        relaxResources(true);
+        return true; // true indicates we handled the error
+    }
+
+    @Override
+    public void onDestroy() {
+        relaxResources(true);
+        super.onDestroy();
     }
 }

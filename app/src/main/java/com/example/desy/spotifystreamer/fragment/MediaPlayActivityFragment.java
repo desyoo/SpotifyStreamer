@@ -1,12 +1,13 @@
 package com.example.desy.spotifystreamer.fragment;
 
 import android.content.Intent;
-import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.v4.app.Fragment;
 import android.util.Log;
+import android.view.GestureDetector;
 import android.view.LayoutInflater;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
@@ -16,8 +17,10 @@ import android.widget.TextView;
 
 import com.example.desy.spotifystreamer.MyMusicService;
 import com.example.desy.spotifystreamer.R;
+import com.example.desy.spotifystreamer.model.SimpleTrack;
 import com.squareup.picasso.Picasso;
 
+import java.util.ArrayList;
 import java.util.Timer;
 import java.util.concurrent.TimeUnit;
 
@@ -38,6 +41,7 @@ public class MediaPlayActivityFragment extends Fragment implements View.OnClickL
     private TextView tvEndTime;
     private Button btBack;
     private Button btPlay;
+    private Button btPause;
     private Button btForward;
     private long second;
     private long minute;
@@ -51,9 +55,11 @@ public class MediaPlayActivityFragment extends Fragment implements View.OnClickL
     private String musicUrl;
     private Timer mTimer;
     private double timeElapsed = 0, finalTime = 0;
-    private MyMusicService myMusicService;
-
-
+    boolean isPlaying = false;
+    private int pos;
+    private ArrayList<SimpleTrack> listTack = new ArrayList<>();
+    GestureDetector gestureDetector;
+    static int click = 0;
 
     public MediaPlayActivityFragment() {
     }
@@ -67,9 +73,10 @@ public class MediaPlayActivityFragment extends Fragment implements View.OnClickL
         tvEndTime = (TextView) rootView.findViewById(R.id.tvEndtime);
         btBack = (Button) rootView.findViewById(R.id.btBack);
         btPlay = (Button) rootView.findViewById(R.id.btPlay);
+        btPause = (Button) rootView.findViewById(R.id.btPause);
         btForward = (Button) rootView.findViewById(R.id.btForward);
         musicSeekBar = (SeekBar) rootView.findViewById(R.id.seekBar);
-        musicSeekBar.setMax((int)finalTime);
+        musicSeekBar.setMax((int) finalTime);
     }
 
     @Override
@@ -88,8 +95,11 @@ public class MediaPlayActivityFragment extends Fragment implements View.OnClickL
             artistName = extras.getString("artistName");
             trackName = extras.getString("trackName");
             musicUrl = extras.getString("url");
+            pos = extras.getInt("position");
+            listTack = extras.getParcelableArrayList("listTopTrack");
         }
-        Log.d("music_url",musicUrl);
+
+        Log.d("music_url", musicUrl);
         initializeSettings(rootView);
 
         Picasso.with(getActivity()).load(thumbnail).into(ivThumbnail);
@@ -98,33 +108,10 @@ public class MediaPlayActivityFragment extends Fragment implements View.OnClickL
         tvName.setText(artistName);
         tvTrackName.setText(trackName);
 
-
-        //playbackServiceIntent = new Intent(getActivity(), MyMusicService.class);
-
-//        btPlay.setOnClickListener(new View.OnClickListener() {
-//            @Override
-//            public void onClick(View view) {
-                //startService(playbackServiceIntent);
-//                if (mPlayer.isPlaying()) {
-//                    mPlayer.pause();
-//                    btnPlay.setImageResource(R.drawable.bg_selector_btn_play);
-//                } else {
-//                    mPlayer.start();
-//                    btnPlay.setImageResource(R.drawable.bg_selector_btn_pauce);
-//                }
-//                Intent intent = new Intent(getActivity(), MyMusicService.class);
-//                intent.putExtra("KEY1", musicUrl);
-//                getActivity().startService(intent);
-//            }
-//        });
-
         btPlay.setOnClickListener(this);
+        btPause.setOnClickListener(this);
         btBack.setOnClickListener(this);
         btForward.setOnClickListener(this);
-
-//        Intent i = new Intent(MyMusicService.ACTION_URL);
-//        Uri uri = Uri.parse(musicUrl);
-//        i.setData(uri);
 
 
         musicSeekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
@@ -132,6 +119,11 @@ public class MediaPlayActivityFragment extends Fragment implements View.OnClickL
             public void onProgressChanged(SeekBar seekBar, int i, boolean b) {
                 if (b) {
                     //seekTo(progress);
+                    int seekPos = seekBar.getProgress();
+                    Intent intent = new Intent(getActivity(), MyMusicService.class);
+                    intent.putExtra("pos", seekPos);
+                    intent.setAction(MyMusicService.ACTION_SEEK);
+                    getActivity().startService(intent);
                 }
             }
 
@@ -148,6 +140,7 @@ public class MediaPlayActivityFragment extends Fragment implements View.OnClickL
 
         return rootView;
     }
+
 
 
 //handler to change seekBarTime
@@ -170,18 +163,117 @@ public class MediaPlayActivityFragment extends Fragment implements View.OnClickL
     public void onClick(View view) {
         // Send the correct intent to the MusicService, according to the button that was clicked
         if (view == btPlay) {
-            Intent i = new Intent(MyMusicService.ACTION_PLAY);
-            Uri uri = Uri.parse(musicUrl);
-            i.setData(uri);
+            Intent i = new Intent(getActivity(), MyMusicService.class);
+            i.setAction(MyMusicService.ACTION_PLAY);
+            i.putExtra("url", musicUrl);
             getActivity().startService(i);
-
-            //getActivity().startService(new Intent(MyMusicService.ACTION_PLAY));
+            btPlay.setVisibility(View.INVISIBLE);
+            btPause.setVisibility(View.VISIBLE);
+            btPlay.setEnabled(false);
+            btPause.setEnabled(true);
+            Log.d("music","music_is_on");
+        } else if (view == btPause) {
+            Log.d("music", "music_is_off");
+            Intent i = new Intent(getActivity(), MyMusicService.class);
+            i.setAction(MyMusicService.ACTION_PAUSE);
+            getActivity().startService(i);
+            btPlay.setVisibility(View.VISIBLE);
+            btPause.setVisibility(View.INVISIBLE);
+            btPlay.setEnabled(true);
+            btPause.setEnabled(false);
         }
-//        else if (view == mPauseButton)
-//            startService(new Intent(MusicService.ACTION_PAUSE));
-        else if (view == btForward)
-            getActivity().startService(new Intent(MyMusicService.ACTION_SKIP));
-        else if (view == btBack)
-            getActivity().startService(new Intent(MyMusicService.ACTION_REWIND));
+        else if (view == btForward) {
+            pos++;
+            if (pos >= listTack.size()) {
+                pos = 0;
+            }
+
+            getActivity().runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    Picasso.with(getActivity()).load(listTack.get(pos).getThumbnail()).into(ivThumbnail);
+                    //tvEndTime.setText(simpleTime);
+                    tvAlbum.setText(listTack.get(pos).getAlbum());
+                    tvName.setText(listTack.get(pos).getName());
+                    tvTrackName.setText(listTack.get(pos).getTrackName());
+                    btPlay.setVisibility(View.INVISIBLE);
+                    btPause.setVisibility(View.VISIBLE);
+                    btPlay.setEnabled(false);
+                    btPause.setEnabled(true);
+                }
+            });
+            Intent i = new Intent(getActivity(), MyMusicService.class);
+            i.putExtra("url", listTack.get(pos).getMusicUrl());
+            i.setAction(MyMusicService.ACTION_PLAY);
+            getActivity().startService(i);
+        }
+        else if (view == btBack) {
+            click++;
+            Handler handler = new Handler();
+            Runnable r = new Runnable() {
+
+                @Override
+                public void run() {
+                    // single click *******************************
+                    if (click == 1) {
+                        Intent i = new Intent(getActivity(), MyMusicService.class);
+                        i.setAction(MyMusicService.ACTION_REWIND);
+                        getActivity().startService(i);
+                    }
+                    // double click *********************************
+                    if (click == 2) {
+                        pos--;
+                        if (pos < 0) {
+                            pos = listTack.size()-1;
+                        }
+                        getActivity().runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                Picasso.with(getActivity()).load(listTack.get(pos).getThumbnail()).into(ivThumbnail);
+                                //tvEndTime.setText(simpleTime);
+                                tvAlbum.setText(listTack.get(pos).getAlbum());
+                                tvName.setText(listTack.get(pos).getName());
+                                tvTrackName.setText(listTack.get(pos).getTrackName());
+                                btPlay.setVisibility(View.INVISIBLE);
+                                btPause.setVisibility(View.VISIBLE);
+                                btPlay.setEnabled(false);
+                                btPause.setEnabled(true);
+                            }
+                        });
+                        Intent i = new Intent(getActivity(), MyMusicService.class);
+                        i.putExtra("url", listTack.get(pos).getMusicUrl());
+                        i.setAction(MyMusicService.ACTION_PLAY);
+                        getActivity().startService(i);
+                    }
+                    click = 0;
+                }
+            };
+            if (click == 1) {
+                handler.postDelayed(r, 500);
+            }
+
+        }
     }
+
+
+
+
+    private class GestureListener extends GestureDetector.SimpleOnGestureListener {
+
+        @Override
+        public boolean onDown(MotionEvent e) {
+            return true;
+        }
+        // event when double tap occurs
+        @Override
+        public boolean onDoubleTap(MotionEvent e) {
+            float x = e.getX();
+            float y = e.getY();
+
+            Log.d("Double Tap", "Tapped at: (" + x + "," + y + ")");
+
+            return true;
+        }
+    }
+
 }

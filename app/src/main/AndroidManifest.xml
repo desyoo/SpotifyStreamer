@@ -33,11 +33,16 @@
         <activity
             android:name=".MediaPlayActivity"
             android:label="@string/title_activity_media_play" >
+            <!-- Parent activity meta-data to support 4.0 and lower -->
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="com.example.desy.spotifystreamer.TopTracksActivity" />
         </activity>
 
         <service android:exported="false" android:name=".MyMusicService">
             <intent-filter>
                 <action android:name="com.example.desy.spotifystreamer.PLAY" />
+                <action android:name="com.example.desy.spotifystreamer.PAUSE" />
                 <data android:scheme="https" />
             </intent-filter>
         </service>
