@@ -10,6 +10,7 @@ import android.content.Intent;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.net.wifi.WifiManager;
+import android.os.Binder;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.os.PowerManager;
@@ -91,6 +92,20 @@ public class MyMusicService extends Service implements MediaPlayer.OnPreparedLis
     public MyMusicService () {
     }
 
+    // Binder given to clients
+    private final IBinder mBinder = new LocalBinder();
+
+    /**
+     * Class used for the client Binder.  Because we know this service always
+     * runs in the same process as its clients, we don't need to deal with IPC.
+     */
+    public class LocalBinder extends Binder {
+        MyMusicService getService() {
+            // Return this instance of LocalService so clients can call public methods
+            return MyMusicService.this;
+        }
+    }
+
     @Override
     public void onCreate() {
         super.onCreate();
@@ -115,11 +130,9 @@ public class MyMusicService extends Service implements MediaPlayer.OnPreparedLis
             Toast.makeText(this, "service pause", Toast.LENGTH_SHORT).show();
             processPauseRequest();
         }
-//        else if (intent.getAction().equals(ACTION_SKIP)) {
-//
         else if (intent.getAction().equals(ACTION_REWIND)) {
             processRewindRequest();
-        } else if (intent.getAction().equals(ACTION_REWIND)) {
+        } else if (intent.getAction().equals(ACTION_SEEK)) {
             Bundle extras = intent.getExtras();
             int pos = extras.getInt("pos");
             updateSeekPos(pos);
@@ -270,6 +283,9 @@ public class MyMusicService extends Service implements MediaPlayer.OnPreparedLis
         }
     }
 
+    public int getSeekPos () {
+        return mMediaPlayer.getCurrentPosition();
+    }
 
     public void setList(ArrayList<SimpleTrack> theSongs){
         songs=theSongs;
@@ -287,7 +303,7 @@ public class MyMusicService extends Service implements MediaPlayer.OnPreparedLis
 
     @Override
     public IBinder onBind(Intent intent) {
-        return null;
+        return mBinder;
     }
 
     @Override
