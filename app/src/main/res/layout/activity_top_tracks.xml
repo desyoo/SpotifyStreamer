@@ -1,5 +1,8 @@
-<fragment xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools" android:id="@+id/fragment"
-    android:name="com.example.desy.spotifystreamer.fragment.TopTracksFragment"
-    tools:layout="@layout/fragment_top_tracks" android:layout_width="match_parent"
-    android:layout_height="match_parent" />
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/topTrack_detail_container"
+    android:name="com.example.desy.spotifystreamer.app.TopTracksActivity"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context="com.example.desy.spotifystreamer.app.TopTracksActivity"
+    tools:ignore="MergeRootFrame"/>

@@ -1,9 +1,11 @@
 package com.example.desy.spotifystreamer;
 
-import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
+import android.support.v7.app.ActionBarActivity;
 import android.view.Menu;
 import android.view.MenuItem;
+
+import com.example.desy.spotifystreamer.fragment.TopTracksFragment;
 
 
 public class TopTracksActivity extends ActionBarActivity {
@@ -12,6 +14,11 @@ public class TopTracksActivity extends ActionBarActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_top_tracks);
+        if (savedInstanceState == null) {
+            getSupportFragmentManager().beginTransaction()
+                    .add(R.id.topTrack_detail_container, new TopTracksFragment())
+                    .commit();
+        }
     }
 
 

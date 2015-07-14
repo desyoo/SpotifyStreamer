@@ -36,6 +36,8 @@ public class SearchArtistFragment extends Fragment {
     private SearchArtistAdapter mSearchArtistAdapter;
     private ArrayList<SimpleArtist> list = new ArrayList<>();
     private ListView mListView;
+    private static final String TOPTRACKS_TAG = "DFTAG";
+    private boolean mTwoPane;
 
     public SearchArtistFragment() {
         // Required empty public constructor
@@ -80,13 +82,26 @@ public class SearchArtistFragment extends Fragment {
         mListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
-                SimpleArtist artist = list.get(i);
-                String id = artist.id;
-                Log.d("artist_id",id);
-                Intent intent = new Intent(getActivity(),TopTracksActivity.class);
-                //based on item add info to intent
-                intent.putExtra("artist_id",id);
-                startActivity(intent);
+                if (mTwoPane) {
+                    SimpleArtist artist = list.get(i);
+                    String id = artist.id;
+                    Bundle args = new Bundle();
+                    args.putString("artist_id", id);
+                    TopTracksFragment fragment = new TopTracksFragment();
+                    fragment.setArguments(args);
+                    fragment.twoPaneFrag(mTwoPane);
+                    getActivity().getSupportFragmentManager().beginTransaction()
+                            .replace(R.id.topTrack_detail_container,fragment,TOPTRACKS_TAG)
+                            .commit();
+                } else {
+                    SimpleArtist artist = list.get(i);
+                    String id = artist.id;
+                    Log.d("artist_id", id);
+                    Intent intent = new Intent(getActivity(), TopTracksActivity.class);
+                    //based on item add info to intent
+                    intent.putExtra("artist_id", id);
+                    startActivity(intent);
+                }
             }
         });
 
@@ -139,13 +154,15 @@ public class SearchArtistFragment extends Fragment {
             public void failure(RetrofitError error) {
                 //Display an error message
                 if (error != null) {
-                    final RetrofitError getError = error;
-                    getActivity().runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            Toast.makeText(getActivity(), getError.toString(), Toast.LENGTH_SHORT).show();
-                        }
-                    });
+                    if (!mTwoPane) {
+                        final RetrofitError getError = error;
+                        getActivity().runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                Toast.makeText(getActivity(), getError.toString(), Toast.LENGTH_SHORT).show();
+                            }
+                        });
+                    }
                 }
             }
         });
@@ -160,5 +177,8 @@ public class SearchArtistFragment extends Fragment {
     }
 
 
+    public void setSingleLayout(boolean mTwoPane) {
+        this.mTwoPane = mTwoPane;
+    }
 
 }

@@ -1,12 +1,11 @@
-package com.example.desy.spotifystreamer.fragment;
+package com.example.desy.spotifystreamer;
 
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.CountDownTimer;
 import android.os.Handler;
-import android.support.v4.app.Fragment;
+import android.support.v4.app.DialogFragment;
 import android.util.Log;
-import android.view.GestureDetector;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -15,24 +14,17 @@ import android.widget.ImageView;
 import android.widget.SeekBar;
 import android.widget.TextView;
 
-import com.example.desy.spotifystreamer.MyMusicService;
-import com.example.desy.spotifystreamer.R;
-import com.example.desy.spotifystreamer.Utilities;
 import com.example.desy.spotifystreamer.model.SimpleTrack;
 import com.squareup.picasso.Picasso;
 
 import java.util.ArrayList;
-import java.util.Timer;
-
 
 /**
- * A placeholder fragment containing a simple view.
+ * Created by desy on 7/14/15.
  */
-public class MediaPlayActivityFragment extends Fragment implements View.OnClickListener{
-
+public class DialogMusicPlayer extends DialogFragment implements View.OnClickListener {
+    private static final String LIST_TRACK = "listTopTrack";
     private static final String FORMAT = "%01d:%02d";
-
-    //Intent playbackServiceIntent;
     private ImageView ivThumbnail;
     private TextView tvAlbum;
     private TextView tvName;
@@ -51,24 +43,12 @@ public class MediaPlayActivityFragment extends Fragment implements View.OnClickL
     private String artistName;
     private String trackName;
     private SeekBar musicSeekBar;
-    private Handler durationHandler = new Handler();
     private String musicUrl;
-    private Timer mTimer;
-    private double timeElapsed = 0, finalTime = 0;
-    boolean isPlaying = false;
     private int pos;
-    private ArrayList<SimpleTrack> listTack = new ArrayList<>();
-    GestureDetector gestureDetector;
     static int click = 0;
-    private Utilities utils;
-    MyMusicService mService;
-    Handler updateHandler;
     int timer;
     CountDownTimer countDown;
-    private boolean dialogFrag = false;
-
-    public MediaPlayActivityFragment() {
-    }
+    private ArrayList<SimpleTrack> listTack = new ArrayList<>();
 
     private void initializeSettings(View rootView) {
         ivThumbnail = (ImageView) rootView.findViewById(R.id.ivAlbumArtwork);
@@ -85,27 +65,39 @@ public class MediaPlayActivityFragment extends Fragment implements View.OnClickL
         //musicSeekBar.setMax((int) finalTime);
     }
 
-    @Override
-    public View onCreateView(final LayoutInflater inflater, ViewGroup container,
-                             Bundle savedInstanceState) {
-        View rootView = inflater.inflate(R.layout.fragment_media_play, container, false);
 
+    public DialogMusicPlayer() {
+
+    }
+
+    public static DialogMusicPlayer newInstance(String title) {
+        DialogMusicPlayer frag = new DialogMusicPlayer();
+        Bundle args = new Bundle();
+        args.putString("title", title);
+        frag.setArguments(args);
+        return frag;
+    }
+
+    @Override
+    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+        View rootView = inflater.inflate(R.layout.dialog_fragment_media_player, container);
+        getDialog().setTitle("DialogFragment");
+        Bundle arguments = getArguments();
         if (savedInstanceState == null) {
-            Bundle extras = getActivity().getIntent().getExtras();
-            second = (extras.getLong("trackDuration") / 1000) % 60;
-            minute = (extras.getLong("trackDuration") / (1000 * 60)) % 60;
-            //long hour = (extras.getLong("trackDuration") / (1000 * 60 * 60)) % 24;
-            simpleTime = String.format(FORMAT, minute,second);
-            thumbnail = extras.getString("thumbnail");
-            album = extras.getString("album");
-            artistName = extras.getString("artistName");
-            trackName = extras.getString("trackName");
-            musicUrl = extras.getString("url");
-            pos = extras.getInt("position");
-            listTack = extras.getParcelableArrayList("listTopTrack");
+//            listTack = savedInstanceState.getParcelableArrayList(LIST_TRACK);
+            listTack = arguments.getParcelableArrayList(LIST_TRACK);
+            pos = arguments.getInt("position");
+//            second = (extras.getLong("trackDuration") / 1000) % 60;
+//            minute = (extras.getLong("trackDuration") / (1000 * 60)) % 60;
+//            //long hour = (extras.getLong("trackDuration") / (1000 * 60 * 60)) % 24;
+//            simpleTime = String.format(FORMAT, minute,second);
+            thumbnail = listTack.get(pos).getThumbnail();
+            album = listTack.get(pos).getAlbum();
+            artistName = listTack.get(pos).getName();
+            trackName = listTack.get(pos).getTrackName();
+            musicUrl = listTack.get(pos).getMusicUrl();
         }
-        utils = new Utilities();
-        Log.d("music_url", musicUrl);
+
         initializeSettings(rootView);
 
         Picasso.with(getActivity()).load(thumbnail).into(ivThumbnail);
@@ -118,10 +110,10 @@ public class MediaPlayActivityFragment extends Fragment implements View.OnClickL
         btPause.setOnClickListener(this);
         btBack.setOnClickListener(this);
         btForward.setOnClickListener(this);
-
-
+        // Do something else
         return rootView;
     }
+
 
     @Override
     public void onClick(View view) {
@@ -154,7 +146,7 @@ public class MediaPlayActivityFragment extends Fragment implements View.OnClickL
             btPause.setVisibility(View.VISIBLE);
             btPlay.setEnabled(false);
             btPause.setEnabled(true);
-            Log.d("music","music_is_on");
+            Log.d("music", "music_is_on");
         } else if (view == btPause) {
             Log.d("music", "music_is_off");
             Intent i = new Intent(getActivity(), MyMusicService.class);
@@ -276,9 +268,4 @@ public class MediaPlayActivityFragment extends Fragment implements View.OnClickL
 
         }
     }
-
-    public void setDialogFrag (boolean setDialogFrag) {
-        dialogFrag = setDialogFrag;
-    }
-
 }
