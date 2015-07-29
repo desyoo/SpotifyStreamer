@@ -3,7 +3,6 @@ package com.example.desy.spotifystreamer.fragment;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
-import android.util.Log;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -96,7 +95,7 @@ public class SearchArtistFragment extends Fragment {
                 } else {
                     SimpleArtist artist = list.get(i);
                     String id = artist.id;
-                    Log.d("artist_id", id);
+                    //Log.d("artist_id", id);
                     Intent intent = new Intent(getActivity(), TopTracksActivity.class);
                     //based on item add info to intent
                     intent.putExtra("artist_id", id);

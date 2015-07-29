@@ -84,13 +84,8 @@ public class DialogMusicPlayer extends DialogFragment implements View.OnClickLis
         getDialog().setTitle("DialogFragment");
         Bundle arguments = getArguments();
         if (savedInstanceState == null) {
-//            listTack = savedInstanceState.getParcelableArrayList(LIST_TRACK);
             listTack = arguments.getParcelableArrayList(LIST_TRACK);
             pos = arguments.getInt("position");
-//            second = (extras.getLong("trackDuration") / 1000) % 60;
-//            minute = (extras.getLong("trackDuration") / (1000 * 60)) % 60;
-//            //long hour = (extras.getLong("trackDuration") / (1000 * 60 * 60)) % 24;
-//            simpleTime = String.format(FORMAT, minute,second);
             thumbnail = listTack.get(pos).getThumbnail();
             album = listTack.get(pos).getAlbum();
             artistName = listTack.get(pos).getName();
@@ -99,6 +94,10 @@ public class DialogMusicPlayer extends DialogFragment implements View.OnClickLis
         }
 
         initializeSettings(rootView);
+
+        int width = getResources().getDimensionPixelSize(R.dimen.popup_width);
+        int height = getResources().getDimensionPixelSize(R.dimen.popup_height);
+        getDialog().getWindow().setLayout(width, height);
 
         Picasso.with(getActivity()).load(thumbnail).into(ivThumbnail);
         tvEndTime.setText("0:30");
@@ -182,6 +181,7 @@ public class DialogMusicPlayer extends DialogFragment implements View.OnClickLis
             i.putExtra("url", listTack.get(pos).getMusicUrl());
             i.setAction(MyMusicService.ACTION_PLAY);
             getActivity().startService(i);
+
             timer = 0;
             countDown = new CountDownTimer(30000, 1000) {
                 public void onTick(long millisUntilFinished) {
@@ -204,6 +204,7 @@ public class DialogMusicPlayer extends DialogFragment implements View.OnClickLis
         }
         else if (view == btBack) {
             click++;
+            countDown.cancel();
             Handler handler = new Handler();
             Runnable r = new Runnable() {
 
@@ -214,6 +215,25 @@ public class DialogMusicPlayer extends DialogFragment implements View.OnClickLis
                         Intent i = new Intent(getActivity(), MyMusicService.class);
                         i.setAction(MyMusicService.ACTION_REWIND);
                         getActivity().startService(i);
+                        timer = 0;
+                        countDown = new CountDownTimer(30000, 1000) {
+                            public void onTick(long millisUntilFinished) {
+                                //tvStartTime.setText("seconds remaining: " + millisUntilFinished / 1000);
+                                timer++;
+                                if (timer < 10) {
+                                    tvStartTime.setText("0:0" + timer);
+                                } else {
+                                    tvStartTime.setText("0:" + timer);
+                                }
+                                musicSeekBar.setProgress(0);
+                                musicSeekBar.setMax((int) (30));
+                                musicSeekBar.setProgress((int) (timer));
+                            }
+                            public void onFinish() {
+                                timer = 0;
+                                tvStartTime.setText("0:00");
+                            }
+                        }.start();
                     }
                     // double click *********************************
                     if (click == 2) {

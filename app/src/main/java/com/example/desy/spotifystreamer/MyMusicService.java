@@ -125,7 +125,9 @@ public class MyMusicService extends Service implements MediaPlayer.OnPreparedLis
         if (intent.getAction().equals(ACTION_PLAY)) {
             Bundle extras = intent.getExtras();
             String url = extras.getString("url");
-            playNextSong(url);
+            if (url != null) {
+                playNextSong(url);
+            }
         } else if (intent.getAction().equals(ACTION_PAUSE)) {
             Toast.makeText(this, "service pause", Toast.LENGTH_SHORT).show();
             processPauseRequest();
@@ -150,6 +152,7 @@ public class MyMusicService extends Service implements MediaPlayer.OnPreparedLis
             return;
         }
         relaxResources(false); // release everything except MediaPlayer
+
         try {
             createMediaPlayerIfNeeded();
             mMediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
@@ -172,12 +175,14 @@ public class MyMusicService extends Service implements MediaPlayer.OnPreparedLis
             else if (mWifiLock.isHeld()) mWifiLock.release();
 
 
+        } catch (IllegalArgumentException e) {
+
+        } catch (IllegalStateException e) {
+
         } catch (IOException ex) {
             Log.e("MusicService", "IOException playing next song: " + ex.getMessage());
             ex.printStackTrace();
         }
-
-
     }
 
     void processPauseRequest() {

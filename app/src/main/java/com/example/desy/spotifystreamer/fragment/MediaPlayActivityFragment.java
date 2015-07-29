@@ -6,7 +6,6 @@ import android.os.CountDownTimer;
 import android.os.Handler;
 import android.support.v4.app.Fragment;
 import android.util.Log;
-import android.view.GestureDetector;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -28,10 +27,12 @@ import java.util.Timer;
 /**
  * A placeholder fragment containing a simple view.
  */
-public class MediaPlayActivityFragment extends Fragment implements View.OnClickListener{
+public class MediaPlayActivityFragment extends Fragment implements View.OnClickListener {
 
     private static final String FORMAT = "%01d:%02d";
 
+
+    MyMusicService myMusicService;
     //Intent playbackServiceIntent;
     private ImageView ivThumbnail;
     private TextView tvAlbum;
@@ -58,14 +59,13 @@ public class MediaPlayActivityFragment extends Fragment implements View.OnClickL
     boolean isPlaying = false;
     private int pos;
     private ArrayList<SimpleTrack> listTack = new ArrayList<>();
-    GestureDetector gestureDetector;
     static int click = 0;
     private Utilities utils;
-    MyMusicService mService;
     Handler updateHandler;
     int timer;
     CountDownTimer countDown;
     private boolean dialogFrag = false;
+
 
     public MediaPlayActivityFragment() {
     }
@@ -105,8 +105,9 @@ public class MediaPlayActivityFragment extends Fragment implements View.OnClickL
             listTack = extras.getParcelableArrayList("listTopTrack");
         }
         utils = new Utilities();
-        Log.d("music_url", musicUrl);
         initializeSettings(rootView);
+        setRetainInstance(true);
+
 
         Picasso.with(getActivity()).load(thumbnail).into(ivThumbnail);
         tvEndTime.setText("0:30");
@@ -131,25 +132,7 @@ public class MediaPlayActivityFragment extends Fragment implements View.OnClickL
             i.setAction(MyMusicService.ACTION_PLAY);
             i.putExtra("url", musicUrl);
             getActivity().startService(i);
-            countDown = new CountDownTimer(30000, 1000) {
-                public void onTick(long millisUntilFinished) {
-                    //tvStartTime.setText("seconds remaining: " + millisUntilFinished / 1000);
-                    timer++;
-                    if (timer < 10) {
-                        tvStartTime.setText("0:0" + timer);
-                    } else {
-                        tvStartTime.setText("0:" + timer);
-                    }
-                    musicSeekBar.setProgress(0);
-                    musicSeekBar.setMax((int) (30));
-                    musicSeekBar.setProgress((int) (timer));
-                }
-                public void onFinish() {
-                    timer = 0;
-                    tvStartTime.setText("0:00");
-                }
-            }.start();
-
+            timer();
             btPlay.setVisibility(View.INVISIBLE);
             btPause.setVisibility(View.VISIBLE);
             btPlay.setEnabled(false);
@@ -171,7 +154,9 @@ public class MediaPlayActivityFragment extends Fragment implements View.OnClickL
             if (pos >= listTack.size()) {
                 pos = 0;
             }
-
+            if (timer > 0) {
+                countDown.cancel();
+            }
             getActivity().runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
@@ -191,27 +176,13 @@ public class MediaPlayActivityFragment extends Fragment implements View.OnClickL
             i.setAction(MyMusicService.ACTION_PLAY);
             getActivity().startService(i);
             timer = 0;
-            countDown = new CountDownTimer(30000, 1000) {
-                public void onTick(long millisUntilFinished) {
-                    //tvStartTime.setText("seconds remaining: " + millisUntilFinished / 1000);
-                    timer++;
-                    if (timer < 10) {
-                        tvStartTime.setText("0:0" + timer);
-                    } else {
-                        tvStartTime.setText("0:" + timer);
-                    }
-                    musicSeekBar.setProgress(0);
-                    musicSeekBar.setMax((int) (30));
-                    musicSeekBar.setProgress((int) (timer));
-                }
-                public void onFinish() {
-                    timer = 0;
-                    tvStartTime.setText("0:00");
-                }
-            }.start();
+            timer();
         }
         else if (view == btBack) {
             click++;
+            if (timer > 0) {
+                countDown.cancel();
+            }
             Handler handler = new Handler();
             Runnable r = new Runnable() {
 
@@ -222,6 +193,8 @@ public class MediaPlayActivityFragment extends Fragment implements View.OnClickL
                         Intent i = new Intent(getActivity(), MyMusicService.class);
                         i.setAction(MyMusicService.ACTION_REWIND);
                         getActivity().startService(i);
+                        timer = 0;
+                        timer();
                     }
                     // double click *********************************
                     if (click == 2) {
@@ -248,24 +221,7 @@ public class MediaPlayActivityFragment extends Fragment implements View.OnClickL
                         i.setAction(MyMusicService.ACTION_PLAY);
                         getActivity().startService(i);
                         timer = 0;
-                        countDown = new CountDownTimer(30000, 1000) {
-                            public void onTick(long millisUntilFinished) {
-                                //tvStartTime.setText("seconds remaining: " + millisUntilFinished / 1000);
-                                timer++;
-                                if (timer < 10) {
-                                    tvStartTime.setText("0:0" + timer);
-                                } else {
-                                    tvStartTime.setText("0:" + timer);
-                                }
-                                musicSeekBar.setProgress(0);
-                                musicSeekBar.setMax((int) (30));
-                                musicSeekBar.setProgress((int) (timer));
-                            }
-                            public void onFinish() {
-                                timer = 0;
-                                tvStartTime.setText("0:00");
-                            }
-                        }.start();
+                        timer();
                     }
                     click = 0;
                 }
@@ -280,5 +236,34 @@ public class MediaPlayActivityFragment extends Fragment implements View.OnClickL
     public void setDialogFrag (boolean setDialogFrag) {
         dialogFrag = setDialogFrag;
     }
+
+
+
+    private void timer() {
+        countDown = new CountDownTimer(30000, 1000) {
+            public void onTick(long millisUntilFinished) {
+                //tvStartTime.setText("seconds remaining: " + millisUntilFinished / 1000);
+                timer++;
+                if (timer < 10) {
+                    tvStartTime.setText("0:0" + timer);
+                } else {
+                    tvStartTime.setText("0:" + timer);
+                }
+                musicSeekBar.setProgress(0);
+                musicSeekBar.setMax((int) (30));
+                musicSeekBar.setProgress((int) (timer));
+            }
+            public void onFinish() {
+                timer = 0;
+                btPlay.setEnabled(true);
+                btPause.setEnabled(false);
+                btPlay.setVisibility(View.VISIBLE);
+                btPause.setVisibility(View.INVISIBLE);
+
+                tvStartTime.setText("0:00");
+            }
+        }.start();
+    }
+
 
 }
