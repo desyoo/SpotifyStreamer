@@ -55,7 +55,9 @@ public class TopTracksFragment extends Fragment {
             }else {
                 Bundle extras = getActivity().getIntent().getExtras();
                 if (extras == null) {
-                    Toast.makeText(getActivity(), "No Tracks found", Toast.LENGTH_SHORT).show();
+                    if (!SearchArtistFragment.mTwoPane) {
+                        Toast.makeText(getActivity(), "No Tracks found", Toast.LENGTH_SHORT).show();
+                    }
                 } else {
                     artistID = extras.getString("artist_id");
                 }

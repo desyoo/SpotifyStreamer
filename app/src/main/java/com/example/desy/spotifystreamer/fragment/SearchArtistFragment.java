@@ -36,7 +36,7 @@ public class SearchArtistFragment extends Fragment {
     private ArrayList<SimpleArtist> list = new ArrayList<>();
     private ListView mListView;
     private static final String TOPTRACKS_TAG = "DFTAG";
-    private boolean mTwoPane;
+    public static boolean mTwoPane;
 
     public SearchArtistFragment() {
         // Required empty public constructor
